@@ -63,7 +63,8 @@ class JobOfferController extends Controller
             ->latest()
             ->paginate(10);
 
-        return view('job-offers.job-offers', compact('job', 'jobOffers'));
+        // View for per-job offers may not exist anymore; redirect to index filtered by this job if needed
+        return redirect()->route('job-offers.index');
     }
 
     public function accept(JobOffer $jobOffer)

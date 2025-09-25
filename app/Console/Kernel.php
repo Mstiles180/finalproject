@@ -14,6 +14,9 @@ class Kernel extends ConsoleKernel
     {
         // Retrain reputation model daily at 02:30
         $schedule->command('ml:train-reputation')->dailyAt('02:30');
+
+        // Auto-complete jobs whose end date/time has passed
+        $schedule->command('jobs:complete-expired')->everyFiveMinutes();
     }
 
     /**

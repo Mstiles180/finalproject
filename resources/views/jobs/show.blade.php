@@ -212,7 +212,7 @@
                     @auth
                         @if(auth()->user()->isBoss() && auth()->user()->id === $job->user_id)
                             <hr>
-                            <a href="{{ route('job-offers.job-offers', $job) }}" class="btn btn-outline-primary btn-sm w-100">
+                            <a href="{{ route('job-offers.index') }}" class="btn btn-outline-primary btn-sm w-100">
                                 <i class="fas fa-users me-2"></i>View Job Offers
                             </a>
                         @endif
