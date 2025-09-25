@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Warning;
 
 class DashboardController extends Controller
 {
@@ -33,7 +34,20 @@ class DashboardController extends Controller
             $pendingJobOffers = $user->jobOffers()->where('status', 'pending')->count();
             $acceptedJobOffers = $user->jobOffers()->where('status', 'accepted')->count();
 
-            return view('dashboard.worker', compact('pendingJobOffers', 'acceptedJobOffers'));
+            // Mark unseen warnings as read now
+            Warning::where('user_id', $user->id)->whereNull('read_at')->update(['read_at' => now()]);
+
+            // Fetch warnings that are still within 24h of being read (or unread)
+            $warnings = Warning::where('user_id', $user->id)
+                ->where(function($q){
+                    $q->whereNull('read_at')
+                      ->orWhere('read_at', '>=', now()->subDay());
+                })
+                ->latest()
+                ->take(5)
+                ->get();
+
+            return view('dashboard.worker', compact('pendingJobOffers', 'acceptedJobOffers', 'warnings'));
         }
     }
 
@@ -53,23 +67,23 @@ class DashboardController extends Controller
             return redirect()->back()->with('error', "You cannot become available while working on active jobs: {$jobTitles}. Please wait until these jobs are completed or ask your employer to end them early.");
         }
 
-        // If setting to available, require pickup point and administrative location
+        // If setting to available, ensure worker has a pickup point.
+        // Location hierarchy is derived from the admin-assigned pickup point.
         if (!$user->is_available) {
-            $request->validate([
-                'pickup_point_id' => 'required|exists:pickup_points,id',
-                'province_id' => 'required|exists:provinces,id',
-                'district_id' => 'required|exists:districts,id',
-                'sector_id' => 'required|exists:sectors,id',
-                'cell_id' => 'required|exists:cells,id',
-                'village_id' => 'required|exists:villages,id',
-            ]);
-            
-            $user->pickup_point_id = $request->pickup_point_id;
-            $user->province_id = $request->province_id;
-            $user->district_id = $request->district_id;
-            $user->sector_id = $request->sector_id;
-            $user->cell_id = $request->cell_id;
-            $user->village_id = $request->village_id;
+            if (empty($user->pickup_point_id)) {
+                return redirect()->route('settings.profile')
+                    ->with('error', 'Please set your pickup point in Settings before becoming available.');
+            }
+
+            // Backfill location fields from pickup point's village hierarchy if missing
+            $pickup = \App\Models\PickupPoint::with('village.cell.sector.district.province')->find($user->pickup_point_id);
+            if ($pickup && $pickup->village) {
+                $user->village_id = $user->village_id ?: $pickup->village->id;
+                $user->cell_id = $user->cell_id ?: $pickup->village->cell->id;
+                $user->sector_id = $user->sector_id ?: $pickup->village->cell->sector->id;
+                $user->district_id = $user->district_id ?: $pickup->village->cell->sector->district->id;
+                $user->province_id = $user->province_id ?: $pickup->village->cell->sector->district->province->id;
+            }
         }
 
         $user->is_available = !$user->is_available;

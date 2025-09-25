@@ -317,7 +317,46 @@ class JobController extends Controller
                                 'province_id', 'district_id', 'sector_id', 'cell_id', 'village_id')
                         ->get();
 
-        return response()->json(['workers' => $workers]);
+        // Rank workers by ML reputation score (desc)
+        try {
+            $client = app(\App\Services\ReputationClient::class);
+            $scored = $workers->map(function($w) use ($client) {
+                // Aggregate features for this worker
+                $avgRating = (float) \DB::table('job_offers')
+                    ->where('worker_id', $w->id)
+                    ->whereNotNull('rating')
+                    ->avg('rating');
+                $completed = (int) \DB::table('job_offers')
+                    ->where('worker_id', $w->id)
+                    ->where('status', 'completed')
+                    ->count();
+                $totalAccepted = (int) \DB::table('job_offers')
+                    ->where('worker_id', $w->id)
+                    ->whereIn('status', ['accepted','completed'])
+                    ->count();
+                $completionRate = $totalAccepted > 0 ? ($completed / $totalAccepted) : 0.0;
+                $isVerified = (bool) (\DB::table('users')->where('id', $w->id)->value('is_verified') ?? false);
+                $numReports = (int) \DB::table('reports')
+                    ->where('reportable_type', \App\Models\User::class)
+                    ->where('reportable_id', $w->id)
+                    ->count();
+
+                $resp = $client->score([
+                    'avg_rating' => $avgRating ?: 0.0,
+                    'completed_jobs' => $completed,
+                    'is_verified' => $isVerified,
+                    'completion_rate' => $completionRate,
+                    'num_reports' => $numReports,
+                ]);
+                $w->score = is_array($resp) && isset($resp['score']) ? (float) $resp['score'] : 0.0;
+                return $w;
+            })->sortByDesc('score')->values();
+
+            return response()->json(['workers' => $scored]);
+        } catch (\Throwable $e) {
+            // Fallback: return unscored list if ML service not available
+            return response()->json(['workers' => $workers]);
+        }
     }
 
     public function getDistricts(Province $province)
@@ -357,6 +396,19 @@ class JobController extends Controller
             return response()->json(['villages' => $villages]);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage(), 'villages' => []], 500);
+        }
+    }
+
+    public function getPickupPoints(Village $village)
+    {
+        try {
+            $pickupPoints = \App\Models\PickupPoint::where('village_id', $village->id)
+                ->select('id','name','location_description')
+                ->orderBy('name')
+                ->get();
+            return response()->json(['pickup_points' => $pickupPoints]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage(), 'pickup_points' => []], 500);
         }
     }
 } 

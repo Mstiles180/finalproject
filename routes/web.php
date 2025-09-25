@@ -6,6 +6,7 @@ use App\Http\Controllers\JobOfferController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\HistoryController;
+use App\Http\Controllers\AdminController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ApplicationController;
 
@@ -130,9 +131,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/jobs/{job}/offer', [JobOfferController::class, 'store'])->name('job-offers.store');
     Route::delete('/job-offers/{jobOffer}', [JobOfferController::class, 'destroy'])->name('job-offers.destroy');
 
-    // Boss job offer management routes
-    Route::get('/jobs/{job}/offers', [JobOfferController::class, 'jobOffers'])->name('job-offers.job-offers');
-    
+    // Boss reports a worker
+    Route::post('/reports', [\App\Http\Controllers\ReportsController::class, 'store'])->name('reports.store');
+
     // Worker response routes
     Route::post('/job-offers/{jobOffer}/accept', [JobOfferController::class, 'accept'])->name('job-offers.accept');
     Route::post('/job-offers/{jobOffer}/decline', [JobOfferController::class, 'decline'])->name('job-offers.decline');
@@ -158,3 +159,78 @@ Route::get('/api/districts/{province}', [JobController::class, 'getDistricts'])-
 Route::get('/api/sectors/{district}', [JobController::class, 'getSectors'])->name('api.sectors');
 Route::get('/api/cells/{sector}', [JobController::class, 'getCells'])->name('api.cells');
 Route::get('/api/villages/{cell}', [JobController::class, 'getVillages'])->name('api.villages');
+Route::get('/api/pickup-points/{village}', [JobController::class, 'getPickupPoints'])->name('api.pickup_points');
+
+// Admin routes
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
+    Route::get('/users', [AdminController::class, 'users'])->name('users');
+    Route::post('/users/{user}/toggle-suspend', [AdminController::class, 'toggleSuspend'])->name('users.toggle-suspend');
+    Route::post('/users/{user}/reset-password', [AdminController::class, 'resetPassword'])->name('users.reset-password');
+    Route::post('/warn/{user}', function(\Illuminate\Http\Request $request, \App\Models\User $user){
+        $request->validate(['message' => ['required','string','max:2000']]);
+        \App\Models\Warning::create(['user_id' => $user->id, 'message' => $request->message]);
+        return back()->with('success', 'Warning sent to user.');
+    })->name('warn-user');
+    Route::post('/users/{user}/photos', [AdminController::class, 'updateUserPhotos'])->name('users.update-photos');
+    Route::get('/export/users', [AdminController::class, 'exportUsers'])->name('export.users');
+    // Jobs
+    Route::get('/jobs', [AdminController::class, 'jobs'])->name('jobs');
+    Route::post('/jobs/{job}/force-close', [AdminController::class, 'forceCloseJob'])->name('jobs.force-close');
+    Route::delete('/jobs/{job}', [AdminController::class, 'deleteJob'])->name('jobs.delete');
+    Route::get('/export/jobs', [AdminController::class, 'exportJobs'])->name('export.jobs');
+    // Offers
+    Route::get('/offers', [AdminController::class, 'offers'])->name('offers');
+    Route::post('/offers/{jobOffer}/reassign', [AdminController::class, 'reassignOffer'])->name('offers.reassign');
+    Route::get('/export/offers', [AdminController::class, 'exportOffers'])->name('export.offers');
+    // Applications
+    // Removed Applications admin view and export
+    // Pickup points
+    Route::get('/pickup-points', [AdminController::class, 'pickupPoints'])->name('pickup-points');
+    Route::post('/pickup-points', [AdminController::class, 'storePickupPoint'])->name('pickup-points.store');
+    Route::delete('/pickup-points/{pickupPoint}', [AdminController::class, 'deletePickupPoint'])->name('pickup-points.delete');
+
+    // Administrative data
+    Route::get('/provinces', [AdminController::class, 'provinces'])->name('provinces');
+    Route::post('/provinces', [AdminController::class, 'storeProvince'])->name('provinces.store');
+    Route::delete('/provinces/{province}', [AdminController::class, 'deleteProvince'])->name('provinces.delete');
+
+    Route::get('/districts', [AdminController::class, 'districts'])->name('districts');
+    Route::post('/districts', [AdminController::class, 'storeDistrict'])->name('districts.store');
+    Route::delete('/districts/{district}', [AdminController::class, 'deleteDistrict'])->name('districts.delete');
+
+    Route::get('/sectors', [AdminController::class, 'sectors'])->name('sectors');
+    Route::post('/sectors', [AdminController::class, 'storeSector'])->name('sectors.store');
+    Route::delete('/sectors/{sector}', [AdminController::class, 'deleteSector'])->name('sectors.delete');
+
+    Route::get('/cells', [AdminController::class, 'cells'])->name('cells');
+    Route::post('/cells', [AdminController::class, 'storeCell'])->name('cells.store');
+    Route::delete('/cells/{cell}', [AdminController::class, 'deleteCell'])->name('cells.delete');
+
+    Route::get('/villages', [AdminController::class, 'villages'])->name('villages');
+    Route::post('/villages', [AdminController::class, 'storeVillage'])->name('villages.store');
+    Route::delete('/villages/{village}', [AdminController::class, 'deleteVillage'])->name('villages.delete');
+
+    // Administrative exports
+    Route::get('/export/provinces', [AdminController::class, 'exportProvinces'])->name('export.provinces');
+    Route::get('/export/districts', [AdminController::class, 'exportDistricts'])->name('export.districts');
+    Route::get('/export/sectors', [AdminController::class, 'exportSectors'])->name('export.sectors');
+    Route::get('/export/cells', [AdminController::class, 'exportCells'])->name('export.cells');
+    Route::get('/export/villages', [AdminController::class, 'exportVillages'])->name('export.villages');
+
+    // Verifications
+    Route::get('/verifications', [AdminController::class, 'verifications'])->name('verifications');
+    Route::post('/verifications/{user}', [AdminController::class, 'setVerification'])->name('verifications.set');
+
+    // Reports moderation
+    Route::get('/reports', [AdminController::class, 'reports'])->name('reports');
+    Route::post('/reports/{reportId}/status', [AdminController::class, 'updateReportStatus'])->name('reports.update-status');
+
+    // Categories & Skills
+    Route::get('/categories', [AdminController::class, 'categories'])->name('categories');
+    Route::post('/categories', [AdminController::class, 'storeCategory'])->name('categories.store');
+    Route::delete('/categories/{id}', [AdminController::class, 'deleteCategory'])->name('categories.delete');
+    Route::get('/skills', [AdminController::class, 'skills'])->name('skills');
+    Route::post('/skills', [AdminController::class, 'storeSkill'])->name('skills.store');
+    Route::delete('/skills/{id}', [AdminController::class, 'deleteSkill'])->name('skills.delete');
+});

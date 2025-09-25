@@ -34,7 +34,10 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <h6><i class="fas fa-building me-2"></i>Employer</h6>
-                            <p class="text-muted">{{ $job->user->name }}</p>
+                            <p class="text-muted mb-1">{{ $job->user->name }}</p>
+                            @if($job->user->phone)
+                                <div class="small text-muted"><i class="fas fa-phone me-1"></i>{{ $job->user->phone }}</div>
+                            @endif
                         </div>
                         <div class="col-md-6">
                             <h6><i class="fas fa-map-marker-alt me-2"></i>Location</h6>

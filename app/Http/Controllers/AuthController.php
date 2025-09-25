@@ -30,6 +30,22 @@ class AuthController extends Controller
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
 
+            // Block suspended users
+            if (auth()->user()->is_suspended ?? false) {
+                Auth::logout();
+                return back()->withErrors(['email' => 'Your account is suspended.'])->onlyInput('email');
+            }
+
+            // Redirect admins to admin dashboard
+            if (auth()->user()->isAdmin()) {
+                return redirect()->intended(route('admin.dashboard'));
+            }
+
+            // Force new/incomplete profiles to go to profile settings first
+            if (empty(auth()->user()->phone) || (auth()->user()->isWorker() && empty(auth()->user()->pickup_point_id))) {
+                return redirect()->intended(route('settings.profile'));
+            }
+
             return redirect()->intended('/dashboard');
         }
 
@@ -73,7 +89,8 @@ class AuthController extends Controller
 
         Auth::login($user);
 
-        return redirect('/dashboard');
+        // After registration, send users to profile to complete info
+        return redirect()->route('settings.profile');
     }
 
     public function logout(Request $request)

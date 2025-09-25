@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'administrative_api' => [
+        'base_url' => env('ADMIN_API_URL'),
+        'token' => env('ADMIN_API_TOKEN'),
+        'timeout' => 30,
+    ],
+
 ];

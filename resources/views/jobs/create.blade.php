@@ -6,43 +6,67 @@
 <div class="container mt-4">
     <div class="row justify-content-center">
         <div class="col-md-8">
-            <div class="card">
+            <div class="card hover-scale">
                 <div class="card-header">
-                    <h4 class="mb-0"><i class="fas fa-plus me-2"></i>Post a New Job</h4>
+                    <h4 class="mb-0 text-gradient"><i class="fas fa-plus me-2"></i>Post a New Job</h4>
+                    <p class="text-muted mb-0 mt-2">Create a detailed job posting to attract the right workers</p>
                 </div>
                 <div class="card-body">
                     <form method="POST" action="{{ route('jobs.store') }}">
                         @csrf
                         
-                        <div class="mb-3">
-                            <label for="title" class="form-label">Job Title *</label>
+                        <div class="mb-4">
+                            <label for="title" class="form-label">
+                                <i class="fas fa-tag me-2 text-primary"></i>Job Title *
+                            </label>
                             <input type="text" class="form-control @error('title') is-invalid @enderror" 
-                                   id="title" name="title" value="{{ old('title') }}" required>
+                                   id="title" name="title" value="{{ old('title') }}" 
+                                   placeholder="Enter a clear and descriptive job title" required>
                             @error('title')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
                         
-                        <div class="mb-3">
-                            <label for="description" class="form-label">Job Description *</label>
+                        <div class="mb-4">
+                            <label for="description" class="form-label">
+                                <i class="fas fa-align-left me-2 text-primary"></i>Job Description *
+                            </label>
                             <textarea class="form-control @error('description') is-invalid @enderror" 
-                                      id="description" name="description" rows="6" required>{{ old('description') }}</textarea>
-                            <div class="form-text">Provide a detailed description of the role, responsibilities, and what you're looking for in a candidate.</div>
+                                      id="description" name="description" rows="6" 
+                                      placeholder="Describe the job responsibilities, requirements, and expectations..." required>{{ old('description') }}</textarea>
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Provide a detailed description of the role, responsibilities, and what you're looking for in a candidate.
+                            </div>
                             @error('description')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
                         
-                        <div class="mb-3">
-                            <label for="category" class="form-label">Work Category *</label>
+                        <div class="mb-4">
+                            <label for="category" class="form-label">
+                                <i class="fas fa-briefcase me-2 text-primary"></i>Work Category *
+                            </label>
                             <select class="form-select @error('category') is-invalid @enderror" id="category" name="category" required>
                                 <option value="">Select work category</option>
-                                <option value="laundry" {{ old('category') == 'laundry' ? 'selected' : '' }}>Laundry (Washing clothes)</option>
-                                <option value="builder" {{ old('category') == 'builder' ? 'selected' : '' }}>Builder</option>
-                                <option value="builder_helper" {{ old('category') == 'builder_helper' ? 'selected' : '' }}>Builder Helper</option>
-                                <option value="farmer" {{ old('category') == 'farmer' ? 'selected' : '' }}>Farmer</option>
-                                <option value="cleaner" {{ old('category') == 'cleaner' ? 'selected' : '' }}>Cleaner</option>
-                                <option value="other" {{ old('category') == 'other' ? 'selected' : '' }}>Other</option>
+                                <option value="laundry" {{ old('category') == 'laundry' ? 'selected' : '' }}>
+                                    <i class="fas fa-tshirt me-2"></i>Laundry (Washing clothes)
+                                </option>
+                                <option value="builder" {{ old('category') == 'builder' ? 'selected' : '' }}>
+                                    <i class="fas fa-hammer me-2"></i>Builder
+                                </option>
+                                <option value="builder_helper" {{ old('category') == 'builder_helper' ? 'selected' : '' }}>
+                                    <i class="fas fa-tools me-2"></i>Builder Helper
+                                </option>
+                                <option value="farmer" {{ old('category') == 'farmer' ? 'selected' : '' }}>
+                                    <i class="fas fa-seedling me-2"></i>Farmer
+                                </option>
+                                <option value="cleaner" {{ old('category') == 'cleaner' ? 'selected' : '' }}>
+                                    <i class="fas fa-broom me-2"></i>Cleaner
+                                </option>
+                                <option value="other" {{ old('category') == 'other' ? 'selected' : '' }}>
+                                    <i class="fas fa-ellipsis-h me-2"></i>Other
+                                </option>
                             </select>
                             @error('category')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -139,13 +163,8 @@
                             <label for="pickup_point_id" class="form-label">Pickup Point *</label>
                             <select class="form-select @error('pickup_point_id') is-invalid @enderror" id="pickup_point_id" name="pickup_point_id" required>
                                 <option value="">Select pickup point</option>
-                                @foreach(\App\Models\PickupPoint::all() as $pickupPoint)
-                                    <option value="{{ $pickupPoint->id }}" {{ old('pickup_point_id') == $pickupPoint->id ? 'selected' : '' }}>
-                                        {{ $pickupPoint->name }} - {{ $pickupPoint->location_description }}
-                                    </option>
-                                @endforeach
                             </select>
-                            <div class="form-text">Select the pickup point where workers will meet for this job.</div>
+                            <div class="form-text">Select the pickup point where workers will meet for this job. Pickup points are filtered based on the selected village.</div>
                             @error('pickup_point_id')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -249,11 +268,11 @@
                             @enderror
                         </div>
                         
-                        <div class="d-flex justify-content-between">
-                            <a href="{{ route('jobs.index') }}" class="btn btn-secondary">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a href="{{ route('jobs.index') }}" class="btn btn-outline-secondary hover-lift">
                                 <i class="fas fa-arrow-left me-2"></i>Cancel
                             </a>
-                            <button type="submit" class="btn btn-primary">
+                            <button type="submit" class="btn btn-primary btn-lg hover-lift">
                                 <i class="fas fa-paper-plane me-2"></i>Post Job
                             </button>
                         </div>
@@ -493,6 +512,27 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
+    function loadPickupPoints(villageId) {
+        const pickupPointSelect = document.getElementById('pickup_point_id');
+        pickupPointSelect.innerHTML = '<option value="">Select pickup point</option>';
+        
+        if (!villageId) return;
+        
+        fetch(`/api/pickup-points/${villageId}`)
+            .then(response => response.json())
+            .then(data => {
+                data.pickup_points.forEach(pickupPoint => {
+                    const option = document.createElement('option');
+                    option.value = pickupPoint.id;
+                    option.textContent = pickupPoint.name + ' - ' + pickupPoint.location_description;
+                    pickupPointSelect.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error('Error loading pickup points:', error);
+            });
+    }
+
     // Event listeners for cascading dropdowns
     document.getElementById('province_id').addEventListener('change', function() {
         loadDistricts(this.value);
@@ -500,6 +540,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('sector_id').innerHTML = '<option value="">Select Sector</option>';
         document.getElementById('cell_id').innerHTML = '<option value="">Select Cell</option>';
         document.getElementById('village_id').innerHTML = '<option value="">Select Village</option>';
+        document.getElementById('pickup_point_id').innerHTML = '<option value="">Select pickup point</option>';
         loadAvailableWorkers();
     });
 
@@ -508,6 +549,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Reset dependent dropdowns
         document.getElementById('cell_id').innerHTML = '<option value="">Select Cell</option>';
         document.getElementById('village_id').innerHTML = '<option value="">Select Village</option>';
+        document.getElementById('pickup_point_id').innerHTML = '<option value="">Select pickup point</option>';
         loadAvailableWorkers();
     });
 
@@ -515,15 +557,19 @@ document.addEventListener('DOMContentLoaded', function() {
         loadCells(this.value);
         // Reset dependent dropdowns
         document.getElementById('village_id').innerHTML = '<option value="">Select Village</option>';
+        document.getElementById('pickup_point_id').innerHTML = '<option value="">Select pickup point</option>';
         loadAvailableWorkers();
     });
 
     document.getElementById('cell_id').addEventListener('change', function() {
         loadVillages(this.value);
+        // Reset pickup point dropdown
+        document.getElementById('pickup_point_id').innerHTML = '<option value="">Select pickup point</option>';
         loadAvailableWorkers();
     });
 
     document.getElementById('village_id').addEventListener('change', function() {
+        loadPickupPoints(this.value);
         loadAvailableWorkers();
     });
 

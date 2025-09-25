@@ -8,54 +8,54 @@
     
     <!-- Stats Cards -->
     <div class="row g-4 mb-4">
-        <div class="col-md-3">
-            <div class="card bg-primary text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="mb-0">{{ $totalJobs }}</h4>
-                            <p class="mb-0">Total Jobs Posted</p>
-                        </div>
-                        <i class="fas fa-briefcase fa-2x opacity-75"></i>
+        <div class="col-md-3 animate-fade-in-up" style="animation-delay: 0.1s;">
+            <div class="stats-card bg-primary text-white hover-lift">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="mb-0 fw-bold">{{ $totalJobs }}</h2>
+                        <p class="mb-0 opacity-90">Total Jobs Posted</p>
+                    </div>
+                    <div class="bg-white bg-opacity-20 rounded-circle d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                        <i class="fas fa-briefcase fa-2x"></i>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card bg-success text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="mb-0">{{ $totalApplications }}</h4>
-                            <p class="mb-0">Total Job Offers Sent</p>
-                        </div>
-                        <i class="fas fa-paper-plane fa-2x opacity-75"></i>
+        <div class="col-md-3 animate-fade-in-up" style="animation-delay: 0.2s;">
+            <div class="stats-card bg-success text-white hover-lift">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="mb-0 fw-bold">{{ $totalApplications }}</h2>
+                        <p class="mb-0 opacity-90">Total Job Offers Sent</p>
+                    </div>
+                    <div class="bg-white bg-opacity-20 rounded-circle d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                        <i class="fas fa-paper-plane fa-2x"></i>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card bg-info text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="mb-0">{{ $recentJobs->where('status', 'active')->count() }}</h4>
-                            <p class="mb-0">Active Jobs</p>
-                        </div>
-                        <i class="fas fa-check-circle fa-2x opacity-75"></i>
+        <div class="col-md-3 animate-fade-in-up" style="animation-delay: 0.3s;">
+            <div class="stats-card bg-info text-white hover-lift">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="mb-0 fw-bold">{{ $recentJobs->where('status', 'active')->count() }}</h2>
+                        <p class="mb-0 opacity-90">Active Jobs</p>
+                    </div>
+                    <div class="bg-white bg-opacity-20 rounded-circle d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                        <i class="fas fa-check-circle fa-2x"></i>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card bg-warning text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="mb-0">{{ $activeWorkers }}</h4>
-                            <p class="mb-0">Active Workers</p>
-                        </div>
-                        <i class="fas fa-users fa-2x opacity-75"></i>
+        <div class="col-md-3 animate-fade-in-up" style="animation-delay: 0.4s;">
+            <div class="stats-card bg-warning text-white hover-lift">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="mb-0 fw-bold">{{ $activeWorkers }}</h2>
+                        <p class="mb-0 opacity-90">Active Workers</p>
+                    </div>
+                    <div class="bg-white bg-opacity-20 rounded-circle d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                        <i class="fas fa-users fa-2x"></i>
                     </div>
                 </div>
             </div>

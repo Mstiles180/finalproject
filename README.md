@@ -50,6 +50,31 @@ A comprehensive Laravel web application that connects job seekers ("workers") an
 - **Pickup Points**: Designated meeting locations for job coordination
 - **Location-Based Matching**: Workers matched based on administrative location and pickup points
 
+### ✅ **Admin Panel (New)**
+- **Admin Role**: New `admin` role with dedicated dashboard
+- **User Management**: Search/filter users, suspend/reactivate, reset passwords, verify worker documents
+- **Jobs Control**: View all jobs, force close, delete inappropriate jobs
+- **Offers & Applications**: View all offers/applications, reassign offers across workers
+- **Administrative Data CRUD**: Manage provinces, districts, sectors, cells, villages, and pickup points
+- **Categories & Skills**: Manage job categories and worker skills
+- **Disputes/Reports**: Review and resolve reported users or jobs
+- **Exports**: CSV export for users, jobs, offers, applications, and administrative data
+
+### ✅ Worker Profile & Pickup Points (Updated)
+- Worker Settings now include full administrative location: Province → District → Sector → Cell → Village
+- Pickup Point select filters to points assigned to the chosen village
+- Workers can upload National ID and Experience images in Settings
+- Availability toggle uses saved pickup point; location comes from profile
+
+### ✅ Job Posting Location Selection (Updated)
+- When posting a job, employers can select administrative locations: Province → District → Sector → Cell → Village
+- Pickup points are automatically filtered to show only those assigned to the selected village
+- Cascading dropdowns ensure proper location hierarchy and pickup point availability
+
+### ✅ Admin Pickup Point Management (Updated)
+- When creating a pickup point, admin selects Province → District → Sector → Cell → Village (bound to exact village)
+- Pickup points list displays the village
+
 ## Features
 
 ### For Workers (Job Seekers)
@@ -131,6 +156,11 @@ A comprehensive Laravel web application that connects job seekers ("workers") an
    php artisan db:seed
    ```
 
+6. **Default Admin Account**
+   - Email: `admin@gmail.com`
+   - Password: `mstiles@123`
+   - Admin Dashboard: `/admin`
+
 6. **Populate administrative data (optional)**
    ```bash
    php artisan refresh:administrative-data
@@ -147,6 +177,11 @@ A comprehensive Laravel web application that connects job seekers ("workers") an
    php artisan serve
    ```
 
+9. **Storage symlink (for image uploads)**
+   ```bash
+   php artisan storage:link
+   ```
+
 ## Database Structure
 
 ### Core Tables
@@ -156,8 +191,9 @@ A comprehensive Laravel web application that connects job seekers ("workers") an
 - `name` - User's full name
 - `email` - Unique email address
 - `password` - Hashed password
-- `role` - Enum: 'worker' or 'boss'
+- `role` - Enum: 'worker', 'boss', or 'admin'
 - `phone` - Contact phone number
+- `document_url` - Optional URL to uploaded verification document
 - `location` - General location description
 - `category` - Worker category (laundry, builder, farmer, etc.)
 - `other_category` - Custom category if 'other' selected
@@ -165,6 +201,8 @@ A comprehensive Laravel web application that connects job seekers ("workers") an
 - `daily_rate` - Worker's daily rate (for workers)
 - `pickup_point_id` - Foreign key to pickup points
 - `province_id`, `district_id`, `sector_id`, `cell_id`, `village_id` - Administrative location
+- `is_suspended` - Boolean; suspended users cannot log in
+- `is_verified` - Boolean; admin-verified worker document status
 - `email_verified_at` - Email verification timestamp
 - `created_at`, `updated_at` - Timestamps
 
@@ -282,7 +320,119 @@ php artisan jobs:complete-expired
 
 # List all commands
 php artisan list
+
+# Import Rwanda administrative data from external API
+php artisan data:import-administrative --fresh
 ```
+
+### ML Worker Ranking & Reputation (Flask)
+
+Service location: `ml-service/`
+
+Run locally:
+```bash
+cd ml-service
+python -m venv .venv
+. .venv/Scripts/activate  # Windows PowerShell: .venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+python app.py  # starts on http://127.0.0.1:5000
+```
+
+Laravel config:
+1. Set in `work-connect/.env`:
+```env
+ML_API_URL=http://127.0.0.1:5000
+```
+2. Example usage (Artisan):
+```bash
+php artisan ml:score-worker 123
+```
+
+API endpoints:
+- `GET /health` → `{ ok: true, service: "worker-reputation", status: "healthy" }`
+- `POST /score` → body:
+```json
+{
+  "avg_rating": 4.6,
+  "completed_jobs": 18,
+  "is_verified": true,
+  "completion_rate": 0.92,
+  "num_reports": 1
+}
+```
+Response:
+```json
+{
+  "ok": true,
+  "score": 89.7,
+  "breakdown": {
+    "rating_points": 46.0,
+    "completed_points": 18.0,
+    "verified_points": 15.0,
+    "completion_points": 9.2,
+    "report_penalty": 5.0
+  }
+}
+```
+
+### Training the Model (Daily)
+
+- Laravel assembles training samples and calls the Flask `/train` endpoint.
+- Command to trigger training manually:
+```bash
+php artisan ml:train-reputation
+```
+- Scheduler runs daily at 02:30 via `app/Console/Kernel.php`.
+
+Training payload (sent by Laravel):
+```json
+{
+  "samples": [
+    {
+      "avg_rating": 4.8,
+      "completed_jobs": 22,
+      "is_verified": true,
+      "completion_rate": 0.95,
+      "num_reports": 0,
+      "target_score": 93.5
+    }
+  ]
+}
+```
+
+### Employer Reports and Worker Warnings
+
+- Employers can report workers from the Active Workers page. Reports include a reason and optional details.
+- Admin reviews all reports in Admin → Reports, can change status, and send warnings to workers.
+- Warnings are delivered to workers and appear on the Worker Dashboard. Once a worker views their dashboard, warnings are marked as read and automatically disappear 24 hours after being read.
+- Each report decreases the worker reputation by 5 points in both the heuristic and ML-trained model (feature `num_reports`).
+
+Setup/Usage:
+1. Run DB migrations to create the warnings table:
+```bash
+php artisan migrate
+```
+2. Employer report form is available on Jobs → Active Workers (Report button per worker).
+3. Admin panel → Reports shows: reporter name, reported worker, reason, details, status, and a “Warn Worker” button.
+
+### New/Updated API Endpoints
+
+- `GET /api/pickup-points/{village}` - Get pickup points for a village
+
+These power the Settings page cascading selects and pickup point filtering by village.
+
+### External Administrative API Configuration
+
+Add these to your `.env`:
+
+```env
+ADMIN_API_URL=https://your-api.example.com
+ADMIN_API_TOKEN=your_api_token
+```
+
+Usage:
+- `php artisan data:import-administrative` will upsert provinces→villages.
+- `--fresh` will truncate existing provinces, districts, sectors, cells, villages before import.
 
 ## File Structure
 

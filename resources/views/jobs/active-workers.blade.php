@@ -74,7 +74,42 @@
                                                                      <i class="fas fa-user-minus"></i> Remove
                                                                  </button>
                                                              </form>
+                                                             <button class="btn btn-sm btn-outline-warning mt-1" data-bs-toggle="modal" data-bs-target="#reportModal{{ $jobOffer->id }}">
+                                                                 <i class="fas fa-flag"></i> Report
+                                                             </button>
                                                          </div>
+                                                     </div>
+                                                 </div>
+                                             </div>
+                                             <!-- Report Modal -->
+                                             <div class="modal fade" id="reportModal{{ $jobOffer->id }}" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+                                                 <div class="modal-dialog modal-dialog-centered">
+                                                     <div class="modal-content">
+                                                         <div class="modal-header">
+                                                             <h5 class="modal-title">Report Worker - {{ $jobOffer->worker->name }}</h5>
+                                                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                         </div>
+                                                         <form method="POST" action="{{ route('reports.store') }}">
+                                                             @csrf
+                                                             <div class="modal-body">
+                                                                 <input type="hidden" name="worker_id" value="{{ $jobOffer->worker->id }}">
+                                                                 <div class="mb-3">
+                                                                     <label class="form-label">Reason</label>
+                                                                     <input type="text" name="reason" class="form-control" required maxlength="255" placeholder="e.g., No-show, Misconduct" autocomplete="off">
+                                                                 </div>
+                                                                 <div class="mb-3">
+                                                                     <label class="form-label">Details (optional)</label>
+                                                                     <textarea name="details" class="form-control" rows="4" maxlength="2000" placeholder="Provide additional information..." autocomplete="off"></textarea>
+                                                                 </div>
+                                                                 <div class="alert alert-warning">
+                                                                     <i class="fas fa-info-circle me-2"></i>Note: Each verified report reduces the worker reputation by 5 points.
+                                                                 </div>
+                                                             </div>
+                                                             <div class="modal-footer">
+                                                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                                 <button type="submit" class="btn btn-warning">Submit Report</button>
+                                                             </div>
+                                                         </form>
                                                      </div>
                                                  </div>
                                              </div>
@@ -89,7 +124,7 @@
                                              <a href="{{ route('jobs.show', $job) }}" class="btn btn-outline-primary">
                                                  <i class="fas fa-eye"></i> View Job
                                              </a>
-                                             <a href="{{ route('job-offers.job-offers', $job) }}" class="btn btn-outline-info">
+                                             <a href="{{ route('job-offers.index') }}" class="btn btn-outline-info">
                                                  <i class="fas fa-users"></i> All Offers
                                              </a>
                                              <form method="POST" action="{{ route('jobs.end-job', $job) }}" class="d-inline">

@@ -38,14 +38,24 @@
                                 @csrf
                                 <button type="submit" class="btn btn-warning">
                                     <i class="fas fa-toggle-off me-2"></i>
-                                    Make Unavailable
+                                    Be Unavailable
                                 </button>
                             </form>
                         @else
-                            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#availabilityModal">
-                                <i class="fas fa-toggle-on me-2"></i>
-                                Be Available
-                            </button>
+                            @if(!auth()->user()->pickup_point_id)
+                                <a href="{{ route('settings.profile') }}" class="btn btn-success">
+                                    <i class="fas fa-map-marker-alt me-2"></i>
+                                    Set Pickup Point to Be Available
+                                </a>
+                            @else
+                                <form method="POST" action="{{ route('toggle-availability') }}" class="d-inline">
+                                    @csrf
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="fas fa-toggle-on me-2"></i>
+                                        Be Available
+                                    </button>
+                                </form>
+                            @endif
                         @endif
                     </div>
                 </div>
@@ -55,41 +65,41 @@
     
     <!-- Stats Cards -->
     <div class="row g-4 mb-4">
-        <div class="col-md-4">
-            <div class="card bg-primary text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="mb-0">{{ $pendingJobOffers }}</h4>
-                            <p class="mb-0">Pending Job Offers</p>
-                        </div>
-                        <i class="fas fa-briefcase fa-2x opacity-75"></i>
+        <div class="col-md-4 animate-fade-in-up" style="animation-delay: 0.1s;">
+            <div class="stats-card bg-primary text-white hover-lift">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="mb-0 fw-bold">{{ $pendingJobOffers }}</h2>
+                        <p class="mb-0 opacity-90">Pending Job Offers</p>
+                    </div>
+                    <div class="bg-white rounded-circle d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                        <i class="fas fa-briefcase fa-2x text-primary"></i>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card bg-success text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="mb-0">{{ $acceptedJobOffers }}</h4>
-                            <p class="mb-0">Accepted Offers</p>
-                        </div>
-                        <i class="fas fa-check-circle fa-2x opacity-75"></i>
+        <div class="col-md-4 animate-fade-in-up" style="animation-delay: 0.2s;">
+            <div class="stats-card bg-success text-white hover-lift">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="mb-0 fw-bold">{{ $acceptedJobOffers }}</h2>
+                        <p class="mb-0 opacity-90">Accepted Offers</p>
+                    </div>
+                    <div class="bg-white rounded-circle d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                        <i class="fas fa-check-circle fa-2x text-success"></i>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card bg-info text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="mb-0">{{ $pendingJobOffers + $acceptedJobOffers }}</h4>
-                            <p class="mb-0">Total Job Offers</p>
-                        </div>
-                        <i class="fas fa-bell fa-2x opacity-75"></i>
+        <div class="col-md-4 animate-fade-in-up" style="animation-delay: 0.3s;">
+            <div class="stats-card bg-info text-white hover-lift">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="mb-0 fw-bold">{{ $pendingJobOffers + $acceptedJobOffers }}</h2>
+                        <p class="mb-0 opacity-90">Total Job Offers</p>
+                    </div>
+                    <div class="bg-white rounded-circle d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                        <i class="fas fa-bell fa-2x text-info"></i>
                     </div>
                 </div>
             </div>
@@ -187,6 +197,24 @@
             @endif
         </div>
     </div>
+
+    <!-- Warnings Panel -->
+    @if(isset($warnings) && $warnings->count())
+        <div class="card mt-4">
+            <div class="card-header bg-warning">
+                <h5 class="mb-0"><i class="fas fa-triangle-exclamation me-2"></i>Warnings</h5>
+            </div>
+            <div class="card-body">
+                <ul class="mb-0">
+                    @foreach($warnings as $warning)
+                        <li class="mb-2">
+                            <strong>{{ $warning->created_at->format('M d, Y H:i') }}</strong> - {{ $warning->message }}
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+        </div>
+    @endif
 
     <!-- AI-Powered Recommendations Placeholder -->
     <div class="card mt-4" id="aiRecommendations" style="display: none;">
@@ -461,94 +489,5 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<!-- Availability Modal -->
-<div class="modal fade" id="availabilityModal" tabindex="-1" aria-labelledby="availabilityModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="availabilityModalLabel">
-                    <i class="fas fa-map-marker-alt me-2"></i>Select Your Pickup Point
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form method="POST" action="{{ route('toggle-availability') }}">
-                @csrf
-                <div class="modal-body">
-                    <p class="text-muted">To make yourself available for work, please select your current administrative location and pickup point.</p>
-                    
-                    <!-- Administrative Location Fields -->
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="province_id" class="form-label">Province *</label>
-                                <select class="form-select" id="province_id" name="province_id" required>
-                                    <option value="">Select Province</option>
-                                    @foreach(\App\Models\Province::all() as $province)
-                                        <option value="{{ $province->id }}">
-                                            {{ $province->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="district_id" class="form-label">District *</label>
-                                <select class="form-select" id="district_id" name="district_id" required>
-                                    <option value="">Select District</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label for="sector_id" class="form-label">Sector *</label>
-                                <select class="form-select" id="sector_id" name="sector_id" required>
-                                    <option value="">Select Sector</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label for="cell_id" class="form-label">Cell *</label>
-                                <select class="form-select" id="cell_id" name="cell_id" required>
-                                    <option value="">Select Cell</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label for="village_id" class="form-label">Village *</label>
-                                <select class="form-select" id="village_id" name="village_id" required>
-                                    <option value="">Select Village</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="pickup_point_id" class="form-label">Pickup Point *</label>
-                        <select class="form-select" id="pickup_point_id" name="pickup_point_id" required>
-                            <option value="">Select pickup point</option>
-                            @foreach(\App\Models\PickupPoint::all() as $pickupPoint)
-                                <option value="{{ $pickupPoint->id }}">
-                                    {{ $pickupPoint->name }} - {{ $pickupPoint->location_description }}
-                                </option>
-                            @endforeach
-                        </select>
-                        <div class="form-text">This will be your default pickup point for job offers.</div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-success">
-                        <i class="fas fa-toggle-on me-2"></i>Be Available
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+<!-- Availability modal removed; setup pickup point in Settings instead. -->
 @endsection 

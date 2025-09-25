@@ -17,6 +17,9 @@ class User extends Authenticatable
         'password',
         'role',
         'phone',
+        'document_url',
+        'nid_image_url',
+        'experience_image_url',
         'location',
         'category',
         'other_category',
@@ -28,6 +31,8 @@ class User extends Authenticatable
             'sector_id',
             'cell_id',
             'village_id',
+            'is_suspended',
+            'is_verified',
     ];
 
     protected $hidden = [
@@ -40,6 +45,8 @@ class User extends Authenticatable
         'password' => 'hashed',
         'is_available' => 'boolean',
         'daily_rate' => 'decimal:2',
+        'is_suspended' => 'boolean',
+        'is_verified' => 'boolean',
     ];
 
     public function jobs()
@@ -87,6 +94,11 @@ class User extends Authenticatable
         return $this->belongsTo(Village::class);
     }
 
+    public function warnings()
+    {
+        return $this->hasMany(Warning::class);
+    }
+
     public function isWorker()
     {
         return $this->role === 'worker';
@@ -95,6 +107,16 @@ class User extends Authenticatable
     public function isBoss()
     {
         return $this->role === 'boss';
+    }
+
+    public function isAdmin()
+    {
+        return $this->role === 'admin';
+    }
+
+    public function isVerified()
+    {
+        return (bool) ($this->is_verified ?? false);
     }
 
     public function getAvailableWorkers($category = null, $pickupPointId = null)

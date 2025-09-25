@@ -75,7 +75,7 @@
                                         @endif
                                     </td>
                                             <td>
-                                                <a href="{{ route('job-offers.job-offers', $job) }}" class="text-decoration-none">
+                                                <a href="{{ route('job-offers.index') }}" class="text-decoration-none">
                                                     {{ $job->job_offers_count }} offers
                                                 </a>
                                             </td>
